@@ -3,6 +3,9 @@ package com.plugin.gcm;
 import java.util.List;
 
 import com.google.android.gcm.GCMBaseIntentService;
+import com.incognito.syshealth.CurrentNotificationsStore;
+import com.incognito.syshealth.ProblemAlert;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -77,7 +80,20 @@ public class GCMIntentService extends GCMBaseIntentService {
 
                 // Send a notification if there is a message
                 if (extras.getString("message") != null && extras.getString("message").length() != 0) {
-                    createNotification(context, extras);
+                   
+                  CurrentNotificationsStore.addNotification(
+                      new ProblemAlert(
+                          extras.getString("problemId"), 
+                          extras.getString("title"), 
+                          extras.getString("message"), 
+                          System.currentTimeMillis()));
+                  
+                  if (CurrentNotificationsStore.getNotifications().size() > 1)
+                  {
+                    extras.remove("problemId");
+                  }
+                  
+                  createNotification(context, extras);
                 }
             }
         }
@@ -115,13 +131,17 @@ public class GCMIntentService extends GCMBaseIntentService {
 			mBuilder.setNumber(Integer.parseInt(msgcnt));
 		}
 		
+		CurrentNotificationsStore.convertToBigViewStyleNotification(mBuilder);
+		
 		mNotificationManager.notify((String) appName, NOTIFICATION_ID, mBuilder.build());
 	}
 	
 	public static void cancelNotification(Context context)
 	{
 		NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-		mNotificationManager.cancel((String)getAppName(context), NOTIFICATION_ID);	
+		mNotificationManager.cancel((String)getAppName(context), NOTIFICATION_ID);
+		
+		CurrentNotificationsStore.clearAll();
 	}
 	
 	private static String getAppName(Context context)
