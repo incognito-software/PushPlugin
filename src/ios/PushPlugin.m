@@ -193,13 +193,16 @@
     
         if ([thisObject isKindOfClass:[NSDictionary class]])
             [self parseDictionary:thisObject intoJSON:jsonString];
-        else
+        // escape newlines, double-quotes, back-slashes of value if key is 'alert'
+        else if ([key isEqualToString: @"alert"])
             [jsonString appendFormat:@"\"%@\":\"%@\",",
              key,
              [[[[inDictionary objectForKey:key]
-               stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"]
+                stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"]
                 stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""]
                 stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"]];
+        else
+            [jsonString appendFormat:@"\"%@\":\"%@\",", key, [inDictionary objectForKey:key]];
     }
 }
 
